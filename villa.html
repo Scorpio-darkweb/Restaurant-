@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Villa Restaurant | The Art of Dining in Chegutu</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        charcoal: '#0a0a0a',
+                        slate: '#1a1a1a',
+                        gold: '#D4AF37',
+                        'gold-light': '#F3E5AB',
+                        'gold-dark': '#AA8C2C',
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['Lato', 'sans-serif'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 20s linear infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- GSAP for Scrollytelling and Parallax -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- UI/UX Pro Max Additions: Three.js and Lenis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <style>
+        /* Custom Styles */
+        body {
+            background-color: #0a0a0a;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            cursor: none; /* Hide default cursor for Pro Max feel */
+        }
+
+        /* Custom Cursor */
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0; left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .cursor-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #D4AF37;
+        }
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            transition: width 0.2s ease-out, height 0.2s ease-out, background-color 0.2s ease-out;
+        }
+        .cursor-outline.hover {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(212, 175, 55, 0.1);
+            border-color: transparent;
+        }
+        
+        /* Magnetic wrapper */
+        .magnetic-wrap {
+            display: inline-block;
+        }
+
+        /* Hide scrollbar for Netflix-style slider */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(26, 26, 26, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        /* Cinematic Image Masking */
+        .cinematic-shadow {
+            box-shadow: inset 0 0 100px rgba(10, 10, 10, 0.9);
+        }
+
+        /* Responsive Cursor - Hide on touch devices */
+        @media (pointer: coarse) {
+            .cursor-dot, .cursor-outline {
+                display: none !important;
+            }
+            body {
+                cursor: auto !important;
+            }
+        }
+
+        /* Smooth fade up utility classes */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Video Circle Glow */
+        .glow-circle {
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.15), inset 0 0 40px rgba(212, 175, 55, 0.2);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-gold selection:text-charcoal">
+
+    <!-- Custom Cursor Elements -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Floating Navigation -->
+    <nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-5xl z-50 rounded-full glass px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center transition-all duration-300">
+        <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="md:hidden p-2 -ml-2 text-gray-300 hover:text-gold transition-colors">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <span class="font-cinzel text-xl font-bold text-gold tracking-widest hidden sm:inline-block">VILLA</span>
+            <span class="font-cinzel text-lg font-bold text-gold tracking-widest sm:hidden">VILLA</span>
+        </div>
+        
+        <div class="hidden md:flex items-center gap-8 font-sans text-sm tracking-widest text-gray-300">
+            <div class="magnetic-wrap"><a href="#home" class="magnetic-item hover:text-gold transition-colors duration-300 inline-block p-2">HOME</a></div>
+            <div class="magnetic-wrap"><a href="#experience" class="magnetic-item hover:text-gold transition-colors duration-300 inline-block p-2">EXPERIENCE</a></div>
+            <div class="magnetic-wrap"><a href="#menu" class="magnetic-item hover:text-gold transition-colors duration-300 inline-block p-2">MENU</a></div>
+            <div class="magnetic-wrap"><a href="#outdoor" class="magnetic-item hover:text-gold transition-colors duration-300 inline-block p-2">OUTDOOR</a></div>
+            <div class="magnetic-wrap"><a href="#reserve" class="magnetic-item hover:text-gold transition-colors duration-300 inline-block p-2 text-gold font-bold">RESERVE</a></div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Cart Button -->
+            <button id="cart-nav-btn" onclick="toggleCart()" class="relative p-2 text-gray-300 hover:text-gold transition-all duration-300 magnetic-wrap">
+                <div class="magnetic-item">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span id="cart-badge" class="hidden absolute top-0 right-0 bg-gold text-charcoal text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">0</span>
+                </div>
+            </button>
+
+            <!-- Live Status Indicator -->
+            <div class="flex items-center gap-2 sm:gap-3 bg-charcoal/80 px-3 sm:px-4 py-2 rounded-full border border-gray-800">
+                <div id="live-status-dot" class="w-2.5 h-2.5 rounded-full transition-colors duration-500"></div>
+                <span id="live-status-text" class="hidden sm:inline text-xs font-semibold tracking-wide text-gray-300">Loading...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-charcoal/95 backdrop-blur-xl z-[80] transform -translate-y-full transition-transform duration-500 flex flex-col items-center justify-center space-y-8 font-cinzel text-2xl border-b border-gold/20 shadow-2xl md:hidden">
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-gray-400 p-2 hover:text-gold transition-colors"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="#home" onclick="toggleMobileMenu()" class="hover:text-gold transition-colors tracking-widest text-white">HOME</a>
+        <a href="#experience" onclick="toggleMobileMenu()" class="hover:text-gold transition-colors tracking-widest text-white">EXPERIENCE</a>
+        <a href="#menu" onclick="toggleMobileMenu()" class="hover:text-gold transition-colors tracking-widest text-white">MENU</a>
+        <a href="#outdoor" onclick="toggleMobileMenu()" class="hover:text-gold transition-colors tracking-widest text-white">OUTDOOR</a>
+        <a href="#reserve" onclick="toggleMobileMenu()" class="text-gold font-bold tracking-widest">RESERVE</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-screen flex flex-col items-center justify-center pt-20 overflow-hidden bg-charcoal">
+        <!-- Hero Background Image -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=1920" alt="Restaurant Background" class="w-full h-full object-cover opacity-20">
+            <div class="absolute inset-0 bg-gradient-to-b from-charcoal/60 via-charcoal/80 to-charcoal"></div>
+        </div>
+
+        <!-- WebGL Background Canvas -->
+        <canvas id="webgl-canvas" class="absolute inset-0 w-full h-full z-0 opacity-60"></canvas>
+
+        <!-- Background Accents -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+        <div class="z-10 flex flex-col items-center text-center px-4">
+            <!-- Circular Video Frame -->
+            <div class="relative w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 rounded-full p-2 border border-gold/30 glow-circle mb-8 md:mb-12 group animate-pulse-slow">
+                <div class="absolute inset-0 rounded-full border-t-2 border-gold animate-spin-slow opacity-50"></div>
+                <div class="w-full h-full rounded-full overflow-hidden relative">
+                    <!-- High quality cinematic steak cooking video -->
+                    <video autoplay loop muted playsinline class="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-1000">
+                        <source src="https://cdn.pixabay.com/video/2021/08/04/83861-584742636_large.mp4" type="video/mp4">
+                    </video>
+                    <div class="absolute inset-0 bg-charcoal/20"></div>
+                </div>
+            </div>
+
+            <!-- Typography -->
+            <h1 class="font-cinzel text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white font-bold tracking-wider mb-4 drop-shadow-2xl px-2">
+                VILLA <span class="text-gold">RESTAURANT</span>
+            </h1>
+            <p class="font-serif italic text-lg sm:text-xl md:text-3xl text-gray-300 tracking-wide">
+                The Art of Dining.
+            </p>
+            
+            <!-- Scroll Indicator -->
+            <div class="absolute bottom-10 flex flex-col items-center gap-2 opacity-60">
+                <span class="text-xs tracking-widest uppercase font-sans">Scroll to Explore</span>
+                <i data-lucide="chevron-down" class="w-5 h-5 animate-bounce"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience / Scrollytelling Section -->
+    <section id="experience" class="py-32 relative bg-charcoal">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-24 fade-up">
+                <h2 class="font-cinzel text-sm text-gold tracking-[0.3em] uppercase mb-4">The Culinary Journey</h2>
+                <h3 class="font-serif text-4xl md:text-5xl">Curated Experiences</h3>
+            </div>
+
+            <!-- Story 1: Breakfast -->
+            <div class="flex flex-col lg:flex-row items-center gap-16 mb-40 fade-up">
+                <div class="w-full lg:w-1/2 relative">
+                    <div class="aspect-[4/5] rounded-t-full overflow-hidden border border-gold/20 relative group">
+                        <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=1000" alt="Gourmet Breakfast" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
+                        <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-transparent opacity-80"></div>
+                    </div>
+                </div>
+                <div class="w-full lg:w-1/2 flex flex-col justify-center">
+                    <div class="w-16 h-[1px] bg-gold mb-8"></div>
+                    <h4 class="font-serif text-4xl mb-6">Breakfast Classics</h4>
+                    <p class="font-sans text-gray-400 text-lg leading-relaxed mb-8 font-light">
+                        Begin your day in Chegutu with elegance. Our morning menu features artisan breakfast sandwiches crafted with farm-fresh ingredients to awaken the senses.
+                    </p>
+                    <a href="#menu" class="inline-flex items-center gap-2 text-gold hover:text-white transition-colors duration-300 font-sans tracking-widest text-sm uppercase">
+                        Explore Morning Menu <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Story 2: Dinner -->
+            <div class="flex flex-col lg:flex-row-reverse items-center gap-16 fade-up">
+                <div class="w-full lg:w-1/2 relative">
+                    <div class="aspect-[4/5] rounded-b-full overflow-hidden border border-gold/20 relative group">
+                        <img src="https://images.unsplash.com/photo-1594041680534-e8c8cdebd659?auto=format&fit=crop&q=80&w=1000" alt="Signature T-Bone Steak" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
+                        <div class="absolute inset-0 bg-gradient-to-b from-charcoal via-transparent to-transparent opacity-80"></div>
+                    </div>
+                </div>
+                <div class="w-full lg:w-1/2 flex flex-col justify-center lg:items-end lg:text-right">
+                    <div class="w-16 h-[1px] bg-gold mb-8"></div>
+                    <h4 class="font-serif text-4xl mb-6">Signature Dinner Plates</h4>
+                    <p class="font-sans text-gray-400 text-lg leading-relaxed mb-8 font-light">
+                        As dusk settles, immerse yourself in our premium cuts. The celebrated Villa T-Bone, paired with hand-cut rustic chips and signature reductions, redefines the standard of luxury dining.
+                    </p>
+                    <a href="#menu" class="inline-flex items-center gap-2 text-gold hover:text-white transition-colors duration-300 font-sans tracking-widest text-sm uppercase">
+                        View Evening Selection <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Netflix-Style Menu Gallery -->
+    <section id="menu" class="py-24 bg-slate relative overflow-hidden">
+        <div class="px-6 lg:px-12 mb-12 flex justify-between items-end fade-up">
+            <div>
+                <h2 class="font-cinzel text-sm text-gold tracking-[0.3em] uppercase mb-4">Our Masterpieces</h2>
+                <h3 class="font-serif text-4xl md:text-5xl">The Menu Gallery</h3>
+            </div>
+            <div class="hidden md:flex gap-4">
+                <button class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors" onclick="document.getElementById('menu-slider').scrollBy({left: -400, behavior: 'smooth'})">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+                <button class="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors" onclick="document.getElementById('menu-slider').scrollBy({left: 400, behavior: 'smooth'})">
+                    <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Horizontal Scroll Container -->
+        <div id="menu-slider" class="flex overflow-x-auto gap-6 px-6 lg:px-12 pb-12 snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing">
+            
+            <!-- Item 1 -->
+            <div class="min-w-[85vw] md:min-w-[450px] aspect-[4/5] snap-center relative rounded-xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1594041680534-e8c8cdebd659?auto=format&fit=crop&q=80&w=800" alt="Premium T-Bone & Chips" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent opacity-90"></div>
+                <div class="absolute bottom-0 left-0 p-8 w-full transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 flex flex-col justify-end">
+                    <span class="text-gold font-sans text-xs uppercase tracking-widest font-bold mb-2 block">Signature</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-serif text-3xl text-white pr-4">Premium T-Bone & Chips</h4>
+                        <span class="text-gold font-serif text-2xl">$25.00</span>
+                    </div>
+                    <p class="font-sans text-gray-400 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Grilled to perfection, served with rustic hand-cut chips and peppercorn jus.</p>
+                    <button onclick="addToCart('Premium T-Bone & Chips', 25)" class="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 self-start px-6 py-2.5 bg-white/10 hover:bg-gold text-white hover:text-charcoal border border-white/20 hover:border-gold rounded-full text-xs font-sans tracking-widest uppercase font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="min-w-[85vw] md:min-w-[450px] aspect-[4/5] snap-center relative rounded-xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1569691899455-88464f6d3ab1?auto=format&fit=crop&q=80&w=800" alt="BBQ Chicken Winglets" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent opacity-90"></div>
+                <div class="absolute bottom-0 left-0 p-8 w-full transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 flex flex-col justify-end">
+                    <span class="text-gold font-sans text-xs uppercase tracking-widest font-bold mb-2 block">Appetizer</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-serif text-3xl text-white pr-4">BBQ Chicken Winglets</h4>
+                        <span class="text-gold font-serif text-2xl">$12.00</span>
+                    </div>
+                    <p class="font-sans text-gray-400 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Tender chicken winglets tossed in our signature smoky, sweet, and tangy BBQ sauce.</p>
+                    <button onclick="addToCart('BBQ Chicken Winglets', 12)" class="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 self-start px-6 py-2.5 bg-white/10 hover:bg-gold text-white hover:text-charcoal border border-white/20 hover:border-gold rounded-full text-xs font-sans tracking-widest uppercase font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="min-w-[85vw] md:min-w-[450px] aspect-[4/5] snap-center relative rounded-xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800" alt="Traditional Beef Bones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent opacity-90"></div>
+                <div class="absolute bottom-0 left-0 p-8 w-full transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 flex flex-col justify-end">
+                    <span class="text-gold font-sans text-xs uppercase tracking-widest font-bold mb-2 block">Local Favorite</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-serif text-3xl text-white pr-4">Traditional Beef Bones</h4>
+                        <span class="text-gold font-serif text-2xl">$15.00</span>
+                    </div>
+                    <p class="font-sans text-gray-400 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Slow-cooked, rich and hearty traditional beef bones, packed with deep local flavors.</p>
+                    <button onclick="addToCart('Traditional Beef Bones', 15)" class="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 self-start px-6 py-2.5 bg-white/10 hover:bg-gold text-white hover:text-charcoal border border-white/20 hover:border-gold rounded-full text-xs font-sans tracking-widest uppercase font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="min-w-[85vw] md:min-w-[450px] aspect-[4/5] snap-center relative rounded-xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&q=80&w=800" alt="Chicken Fried Rice" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent opacity-90"></div>
+                <div class="absolute bottom-0 left-0 p-8 w-full transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 flex flex-col justify-end">
+                    <span class="text-gold font-sans text-xs uppercase tracking-widest font-bold mb-2 block">Main Course</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-serif text-3xl text-white pr-4">Chicken Fried Rice</h4>
+                        <span class="text-gold font-serif text-2xl">$14.00</span>
+                    </div>
+                    <p class="font-sans text-gray-400 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Savory fried rice tossed with tender chicken pieces, fresh vegetables, and delicate soy notes.</p>
+                    <button onclick="addToCart('Chicken Fried Rice', 14)" class="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 self-start px-6 py-2.5 bg-white/10 hover:bg-gold text-white hover:text-charcoal border border-white/20 hover:border-gold rounded-full text-xs font-sans tracking-widest uppercase font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 5 -->
+            <div class="min-w-[85vw] md:min-w-[450px] aspect-[4/5] snap-center relative rounded-xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=800" alt="Artisan Breakfast Sandwich" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent opacity-90"></div>
+                <div class="absolute bottom-0 left-0 p-8 w-full transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 flex flex-col justify-end">
+                    <span class="text-gold font-sans text-xs uppercase tracking-widest font-bold mb-2 block">Morning</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-serif text-3xl text-white pr-4">Artisan Breakfast Sandwich</h4>
+                        <span class="text-gold font-serif text-2xl">$10.00</span>
+                    </div>
+                    <p class="font-sans text-gray-400 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">A hearty, freshly made sandwich perfect to kickstart your morning in Chegutu.</p>
+                    <button onclick="addToCart('Artisan Breakfast Sandwich', 10)" class="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 self-start px-6 py-2.5 bg-white/10 hover:bg-gold text-white hover:text-charcoal border border-white/20 hover:border-gold rounded-full text-xs font-sans tracking-widest uppercase font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 6 -->
+            <div class="min-w-[85vw] md:min-w-[450px] aspect-[4/5] snap-center relative rounded-xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1621226027041-3eb2225cd8a1?auto=format&fit=crop&q=80&w=800" alt="Golden Sausage Roll" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/60 to-transparent opacity-90"></div>
+                <div class="absolute bottom-0 left-0 p-8 w-full transform translate-y-12 group-hover:translate-y-0 transition-transform duration-500 flex flex-col justify-end">
+                    <span class="text-gold font-sans text-xs uppercase tracking-widest font-bold mb-2 block">Snack</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-serif text-3xl text-white pr-4">Golden Sausage Roll</h4>
+                        <span class="text-gold font-serif text-2xl">$5.00</span>
+                    </div>
+                    <p class="font-sans text-gray-400 text-sm mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">Flaky, buttery pastry wrapped around beautifully seasoned premium sausage meat.</p>
+                    <button onclick="addToCart('Golden Sausage Roll', 5)" class="opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 self-start px-6 py-2.5 bg-white/10 hover:bg-gold text-white hover:text-charcoal border border-white/20 hover:border-gold rounded-full text-xs font-sans tracking-widest uppercase font-bold flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Empty space to allow last item to snap to left on desktop -->
+            <div class="hidden md:block min-w-[20vw]"></div>
+        </div>
+    </section>
+
+    <!-- Outdoor Seating - Horizontal Parallax Section using GSAP -->
+    <section id="outdoor" class="bg-charcoal overflow-hidden py-24">
+        <div class="px-6 lg:px-12 mb-16 fade-up">
+            <h2 class="font-cinzel text-sm text-gold tracking-[0.3em] uppercase mb-4">The Ambiance</h2>
+            <h3 class="font-serif text-4xl md:text-5xl">Al Fresco Dining</h3>
+            <p class="mt-4 font-sans text-gray-400 max-w-xl">Experience the tranquility of our meticulously designed outdoor seating area. Perfect for golden hour cocktails or a moonlit dinner.</p>
+        </div>
+
+        <!-- GSAP Scroll Wrapper -->
+        <div class="gsap-horizontal-wrapper h-screen w-full flex items-center relative pl-6 lg:pl-12">
+            <!-- Container that slides left -->
+            <div class="gsap-horizontal-container flex gap-8 h-[60vh] md:h-[70vh]">
+                
+                <!-- Parallax Item -->
+                <div class="gsap-item w-[85vw] md:w-[60vw] h-full relative rounded-2xl overflow-hidden flex-shrink-0 group">
+                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1200" alt="Outdoor Patio" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-500"></div>
+                    <div class="absolute bottom-10 left-10 text-white">
+                        <p class="font-serif text-3xl">The Terrace</p>
+                    </div>
+                </div>
+
+                <!-- Parallax Item -->
+                <div class="gsap-item w-[85vw] md:w-[60vw] h-full relative rounded-2xl overflow-hidden flex-shrink-0 group">
+                    <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1200" alt="Evening Dining" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-500"></div>
+                    <div class="absolute bottom-10 left-10 text-white">
+                        <p class="font-serif text-3xl">Evening Glow</p>
+                    </div>
+                </div>
+
+                <!-- Parallax Item -->
+                <div class="gsap-item w-[85vw] md:w-[60vw] h-full relative rounded-2xl overflow-hidden flex-shrink-0 group pr-12">
+                    <img src="https://images.unsplash.com/photo-1525610553991-2bede1a236e2?auto=format&fit=crop&q=80&w=1200" alt="Table Setting" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-500"></div>
+                    <div class="absolute bottom-10 left-10 text-white">
+                        <p class="font-serif text-3xl">Intimate Settings</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Reservation Section -->
+    <section id="reserve" class="py-32 relative bg-slate">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                
+                <!-- Added Image Column -->
+                <div class="hidden lg:block lg:col-span-5 relative h-full min-h-[700px] rounded-2xl overflow-hidden fade-up border border-white/5 group">
+                    <img src="https://images.unsplash.com/photo-1544148103-0773bf10d330?auto=format&fit=crop&q=80&w=1000" alt="Reserved Table at Villa" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
+                    <div class="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/20 to-transparent opacity-90"></div>
+                    <div class="absolute bottom-10 left-10 right-10 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <h4 class="font-cinzel text-2xl text-gold mb-3">An Unforgettable Evening</h4>
+                        <p class="font-sans text-sm text-gray-400 leading-relaxed">Immerse yourself in our curated ambiance, where every detail is designed for your comfort and delight.</p>
+                    </div>
+                </div>
+
+                <!-- Text & Form Column -->
+                <div class="lg:col-span-7">
+                    <div class="fade-up mb-10">
+                        <h2 class="font-cinzel text-sm text-gold tracking-[0.3em] uppercase mb-4">Secure Your Table</h2>
+                        <h3 class="font-serif text-4xl md:text-5xl mb-6">Make a Reservation</h3>
+                        <p class="font-sans text-gray-400 leading-relaxed mb-8">
+                            Join us at Villa Restaurant for an unforgettable dining experience. Whether it's an intimate dinner or a grand celebration, we'll ensure your time with us is perfect.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-6 mb-2">
+                            <div class="flex items-center gap-3 text-gray-300 font-sans">
+                                <i data-lucide="clock" class="w-5 h-5 text-gold"></i>
+                                <span>08:00 AM - 06:00 PM</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-gray-300 font-sans">
+                                <i data-lucide="phone" class="w-5 h-5 text-gold"></i>
+                                <span>077 379 7482</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass p-8 md:p-10 rounded-2xl border border-white/10 relative overflow-hidden fade-up">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-50"></div>
+                        <form id="booking-form" class="space-y-6">
+                            
+                            <!-- Pre-order summary -->
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="space-y-2">
+                                <label for="date" class="font-sans text-xs uppercase tracking-widest text-gray-400">Date</label>
+                                <!-- Using min attribute via JS to block past dates -->
+                                <input type="date" id="date" required class="w-full bg-charcoal/50 border border-white/10 focus:border-gold outline-none text-white px-4 py-3 rounded-lg transition-colors duration-300 font-sans [color-scheme:dark]">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="time" class="font-sans text-xs uppercase tracking-widest text-gray-400">Time</label>
+                                <input type="time" id="time" min="08:00" max="18:00" required class="w-full bg-charcoal/50 border border-white/10 focus:border-gold outline-none text-white px-4 py-3 rounded-lg transition-colors duration-300 font-sans [color-scheme:dark]">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="guests" class="font-sans text-xs uppercase tracking-widest text-gray-400">Guests</label>
+                                <select id="guests" class="w-full bg-charcoal/50 border border-white/10 focus:border-gold outline-none text-white px-4 py-3 rounded-lg transition-colors duration-300 font-sans appearance-none">
+                                    <option value="1">1 Person</option>
+                                    <option value="2" selected>2 People</option>
+                                    <option value="3">3 People</option>
+                                    <option value="4">4 People</option>
+                                    <option value="5">5 People</option>
+                                    <option value="6+">6+ Group</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="requests" class="font-sans text-xs uppercase tracking-widest text-gray-400">Special Requests</label>
+                            <textarea id="requests" rows="3" class="w-full bg-charcoal/50 border border-white/10 focus:border-gold outline-none text-white px-4 py-3 rounded-lg transition-colors duration-300 font-sans resize-none" placeholder="Anniversary, allergies, preferred seating..."></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gold text-charcoal font-bold font-sans tracking-widest uppercase py-4 rounded-lg hover:bg-gold-light hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all duration-300 flex items-center justify-center gap-2">
+                            Confirm Reservation <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black pt-24 pb-12 border-t border-white/5 relative z-10">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
+                
+                <div>
+                    <h3 class="font-cinzel text-2xl text-gold mb-6 font-bold tracking-widest">VILLA</h3>
+                    <p class="font-sans text-gray-400 text-sm leading-relaxed mb-6">
+                        Chegutu's premier dining destination, offering an exquisite blend of local flavors and international culinary techniques in a luxurious setting.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-serif text-xl mb-6">Visit Us</h4>
+                    <p class="font-sans text-gray-400 text-sm leading-relaxed mb-2 flex items-start gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 mt-0.5 text-gold flex-shrink-0"></i>
+                        <span>187 George Avenue,<br>Chegutu, Zimbabwe</span>
+                    </p>
+                    <p class="font-sans text-gray-400 text-sm leading-relaxed mb-2 flex items-center gap-2">
+                        <i data-lucide="phone" class="w-4 h-4 text-gold flex-shrink-0"></i>
+                        077 379 7482
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-serif text-xl mb-6">Hours</h4>
+                    <ul class="font-sans text-gray-400 text-sm leading-relaxed space-y-2">
+                        <li class="flex justify-between border-b border-white/5 pb-2"><span>Monday - Sunday</span> <span>08:00 AM - 06:00 PM</span></li>
+                        <li class="flex justify-between pt-2 text-gold"><span>Public Holidays</span> <span>Subject to change</span></li>
+                    </ul>
+                </div>
+
+            </div>
+            
+            <div class="text-center border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 font-sans tracking-wider">
+                <p>&copy; <script>document.write(new Date().getFullYear())</script> Villa Restaurant. All Rights Reserved.</p>
+                <p class="mt-2 md:mt-0">Designed for the discerning palate.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Action Buttons (Interactive Info) -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-4">
+        <!-- Get Directions -->
+        <div class="magnetic-wrap">
+            <a href="https://maps.google.com/?q=187+George+Avenue,+Chegutu" target="_blank" class="magnetic-item group relative flex items-center justify-center w-14 h-14 rounded-full bg-slate border border-white/10 shadow-xl hover:border-gold transition-all duration-300">
+                <i data-lucide="map" class="w-6 h-6 text-gray-300 group-hover:text-gold transition-colors pointer-events-none"></i>
+                <!-- Tooltip -->
+                <span class="absolute right-16 px-4 py-2 bg-slate text-xs font-sans tracking-widest uppercase rounded whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-300 border border-white/10">
+                    Get Directions
+                </span>
+            </a>
+        </div>
+        
+        <!-- Call Now -->
+        <div class="magnetic-wrap">
+            <a href="tel:0773797482" class="magnetic-item group relative flex items-center justify-center w-14 h-14 rounded-full bg-gold shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-110 transition-all duration-300">
+                <i data-lucide="phone-call" class="w-6 h-6 text-charcoal pointer-events-none"></i>
+                <!-- Tooltip -->
+                <span class="absolute right-16 px-4 py-2 bg-gold text-charcoal font-bold text-xs font-sans tracking-widest uppercase rounded whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-300">
+                    Call Now
+                </span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Cart Drawer & Overlay -->
+    <div id="cart-overlay" onclick="toggleCart()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+    <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-slate z-[100] transform translate-x-full transition-transform duration-500 border-l border-white/10 flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-charcoal/50">
+            <h3 class="font-cinzel text-xl text-gold flex items-center gap-2"><i data-lucide="shopping-bag" class="w-5 h-5"></i> Your Order</h3>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-white transition-colors p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4 font-sans bg-slate">
+            <div class="text-gray-500 text-center mt-10">Your cart is empty.</div>
+        </div>
+        <div class="p-6 border-t border-white/10 bg-charcoal">
+            <div class="flex justify-between items-center mb-6 font-serif text-2xl">
+                <span class="text-white">Total</span>
+                <span id="cart-total" class="text-gold">$0.00</span>
+            </div>
+            <button onclick="proceedToReservation()" class="w-full bg-gold text-charcoal font-bold font-sans tracking-widest uppercase py-4 rounded-lg hover:bg-gold-light hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all duration-300 flex items-center justify-center gap-2">
+                Proceed to Reserve <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- Mobile Menu Logic ---
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('-translate-y-full');
+        }
+
+        // --- Shopping Cart Logic ---
+        let cart = [];
+        
+        function addToCart(name, price) {
+            cart.push({name, price});
+            updateCartUI();
+            
+            // Highlight cart icon temporarily
+            const btn = document.getElementById('cart-nav-btn');
+            if (btn) {
+                btn.classList.add('scale-110', 'text-gold');
+                setTimeout(() => btn.classList.remove('scale-110', 'text-gold'), 300);
+            }
+            
+            // Open drawer if closed
+            const drawer = document.getElementById('cart-drawer');
+            if(drawer.classList.contains('translate-x-full')) {
+                toggleCart();
+            }
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const itemsContainer = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+            const badge = document.getElementById('cart-badge');
+            
+            badge.textContent = cart.length;
+            if(cart.length === 0) {
+                badge.classList.add('hidden');
+                itemsContainer.innerHTML = '<div class="text-gray-500 text-center mt-10 font-sans">Your cart is empty.<br><span class="text-xs mt-2 block">Select items from the Menu Gallery.</span></div>';
+                totalEl.textContent = '$0.00';
+            } else {
+                badge.classList.remove('hidden');
+                let html = '';
+                let total = 0;
+                cart.forEach((item, i) => {
+                    total += item.price;
+                    html += `
+                        <div class="flex justify-between items-center bg-charcoal/80 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                            <span class="text-gray-200 text-sm font-bold tracking-wide">${item.name}</span>
+                            <div class="flex items-center gap-4">
+                                <span class="text-gold font-serif">$${item.price.toFixed(2)}</span>
+                                <button onclick="removeFromCart(${i})" class="text-red-400/70 hover:text-red-400 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+                itemsContainer.innerHTML = html;
+                totalEl.textContent = '$' + total.toFixed(2);
+                lucide.createIcons(); // re-initialize icons in new HTML
+            }
+            updateReservationSummary();
+        }
+
+        function updateReservationSummary() {
+            const summary = document.getElementById('reservation-order-summary');
+            const list = document.getElementById('reservation-order-list');
+            const totalDisplay = document.getElementById('reservation-order-total');
+            const requestsInput = document.getElementById('requests');
+            
+            if(cart.length > 0) {
+                summary.classList.remove('hidden');
+                
+                // Group items for display
+                const itemCounts = {};
+                let total = 0;
+                cart.forEach(item => {
+                    itemCounts[item.name] = (itemCounts[item.name] || 0) + 1;
+                    total += item.price;
+                });
+
+                list.innerHTML = Object.entries(itemCounts)
+                    .map(([name, count]) => `<li><span class="text-white/50 mr-2">${count}x</span> ${name}</li>`)
+                    .join('');
+                    
+                totalDisplay.textContent = 'Total: $' + total.toFixed(2);
+                
+                // Manage the hidden text in the Special Requests textarea
+                let currentReqs = requestsInput.value || '';
+                const orderMarker = "\n\n--- PRE-ORDER DETAILS ---\n";
+                if(currentReqs.includes(orderMarker)) {
+                    currentReqs = currentReqs.split(orderMarker)[0];
+                }
+                
+                let orderText = orderMarker;
+                Object.entries(itemCounts).forEach(([name, count]) => {
+                    orderText += `${count}x ${name}\n`;
+                });
+                orderText += `Total: $${total.toFixed(2)}`;
+                
+                requestsInput.value = currentReqs + orderText;
+                
+            } else {
+                summary.classList.add('hidden');
+                
+                // Remove order text from textarea
+                if (requestsInput) {
+                    let currentReqs = requestsInput.value || '';
+                    const orderMarker = "\n\n--- PRE-ORDER DETAILS ---\n";
+                    if(currentReqs.includes(orderMarker)) {
+                        requestsInput.value = currentReqs.split(orderMarker)[0];
+                    }
+                }
+            }
+        }
+
+        function toggleCart() {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            drawer.classList.toggle('translate-x-full');
+            
+            if(drawer.classList.contains('translate-x-full')) {
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+                overlay.classList.add('opacity-100');
+            }
+        }
+
+        function proceedToReservation() {
+            toggleCart(); // Close drawer
+            
+            // Allow time for drawer to close, then smooth scroll to the form
+            setTimeout(() => {
+                document.getElementById('reserve').scrollIntoView({behavior: 'smooth'});
+            }, 300);
+        }
+
+        // --- Booking Form Logic ---
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+        }
+
+        const bookingForm = document.getElementById('booking-form');
+        if (bookingForm) {
+            bookingForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalHtml = btn.innerHTML;
+                
+                // Success state UI
+                btn.innerHTML = 'Table Reserved! <i data-lucide="check-circle" class="w-5 h-5"></i>';
+                lucide.createIcons(); // Refresh icons for the new checkmark
+                btn.classList.remove('bg-gold', 'text-charcoal');
+                btn.classList.add('bg-green-600', 'text-white');
+                
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    e.target.reset();
+                    btn.innerHTML = originalHtml;
+                    lucide.createIcons(); // Refresh original icons
+                    btn.classList.add('bg-gold', 'text-charcoal');
+                    btn.classList.remove('bg-green-600', 'text-white');
+                }, 3000);
+            });
+        }
+
+        // --- Live Open/Closed Logic (CAT - UTC+2) ---
+        function updateLiveStatus() {
+            const now = new Date();
+            // Convert local time to UTC, then to CAT (UTC+2)
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const catDate = new Date(utc + (3600000 * 2));
+            const hours = catDate.getHours();
+            
+            const dot = document.getElementById('live-status-dot');
+            const text = document.getElementById('live-status-text');
+            
+            // Operating Hours: 8 AM to 6 PM (18:00)
+            if (hours >= 8 && hours < 18) {
+                dot.classList.add('bg-green-500', 'shadow-[0_0_8px_#22c55e]');
+                dot.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ef4444]');
+                text.textContent = 'OPEN NOW (Closes 6 PM)';
+            } else {
+                dot.classList.add('bg-red-500', 'shadow-[0_0_8px_#ef4444]');
+                dot.classList.remove('bg-green-500', 'shadow-[0_0_8px_#22c55e]');
+                text.textContent = 'CLOSED (Opens 8 AM)';
+            }
+        }
+        // Run immediately and update every minute
+        updateLiveStatus();
+        setInterval(updateLiveStatus, 60000);
+
+        // --- Scrollytelling Fade Up Intersections ---
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Optional: unobserve after showing once
+                    // observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-up').forEach(el => {
+            observer.observe(el);
+        });
+
+        // --- GSAP Horizontal Parallax for Outdoor Section ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Select the container and items
+        const horizontalWrapper = document.querySelector('.gsap-horizontal-wrapper');
+        const horizontalContainer = document.querySelector('.gsap-horizontal-container');
+        
+        // Safety check to ensure elements exist before binding GSAP logic
+        if (horizontalWrapper && horizontalContainer) {
+            // Calculate the total scroll distance based on container width vs viewport width
+            function getScrollAmount() {
+                let containerWidth = horizontalContainer.scrollWidth;
+                return -(containerWidth - window.innerWidth + 80); // 80px padding buffer
+            }
+
+            // Create the tween
+            const tween = gsap.to(horizontalContainer, {
+                x: getScrollAmount,
+                ease: "none"
+            });
+
+            // Setup ScrollTrigger to pin the section and scrub the animation
+            ScrollTrigger.create({
+                trigger: "#outdoor",
+                start: "top top",
+                end: () => `+=${getScrollAmount() * -1}`,
+                pin: true,
+                animation: tween,
+                scrub: 1, // Smooth scrubbing
+                invalidateOnRefresh: true // Recalculate on window resize
+            });
+        }
+
+        // Optional: Simple Drag-to-scroll for Netflix slider on desktop
+        const slider = document.getElementById('menu-slider');
+        if (slider) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                slider.style.scrollSnapType = 'none'; // Disable snap while dragging
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => {
+                isDown = false;
+                slider.style.scrollSnapType = 'x mandatory';
+            });
+            slider.addEventListener('mouseup', () => {
+                isDown = false;
+                slider.style.scrollSnapType = 'x mandatory';
+            });
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; // Scroll-fast multiplier
+                slider.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // ==========================================
+        // UI/UX PRO MAX UPGRADES
+        // ==========================================
+
+        // 1. Smooth Scrolling with Lenis
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smooth: true,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Sync GSAP ScrollTrigger with Lenis
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time)=>{
+          lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0, 0);
+
+        // 2. Custom Physics Cursor
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let outlineX = mouseX;
+        let outlineY = mouseY;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            // Dot follows instantly
+            cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+        });
+
+        // Lerp loop for outline
+        function animateCursor() {
+            let distX = mouseX - outlineX;
+            let distY = mouseY - outlineY;
+            outlineX += distX * 0.15;
+            outlineY += distY * 0.15;
+            
+            cursorOutline.style.transform = `translate(${outlineX}px, ${outlineY}px)`;
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Cursor Hover Effects
+        const interactables = document.querySelectorAll('a, button, .magnetic-item');
+        interactables.forEach(el => {
+            el.addEventListener('mouseenter', () => cursorOutline.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursorOutline.classList.remove('hover'));
+        });
+
+        // 3. Magnetic Hover Effect
+        const magneticItems = document.querySelectorAll('.magnetic-item');
+        magneticItems.forEach(item => {
+            item.addEventListener('mousemove', (e) => {
+                const position = item.getBoundingClientRect();
+                const x = e.clientX - position.left - position.width / 2;
+                const y = e.clientY - position.top - position.height / 2;
+                
+                // Move item
+                gsap.to(item, {
+                    x: x * 0.3,
+                    y: y * 0.3,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+            });
+
+            item.addEventListener('mouseleave', () => {
+                gsap.to(item, {
+                    x: 0,
+                    y: 0,
+                    duration: 0.5,
+                    ease: "elastic.out(1, 0.3)"
+                });
+            });
+        });
+
+        // 4. Three.js Luxury Particle Field (Hero Section)
+        const canvas = document.getElementById('webgl-canvas');
+        if (canvas) {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Create particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 800;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 12; // Spread wider
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            // Gold colored material
+            const material = new THREE.PointsMaterial({
+                size: 0.012,
+                color: 0xD4AF37,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            camera.position.z = 3;
+
+            // Mouse interaction for WebGL
+            let mouseX_GL = 0;
+            let mouseY_GL = 0;
+            
+            document.addEventListener('mousemove', (event) => {
+                mouseX_GL = (event.clientX / window.innerWidth) - 0.5;
+                mouseY_GL = (event.clientY / window.innerHeight) - 0.5;
+            });
+
+            const clock = new THREE.Clock();
+
+            function animateWebGL() {
+                requestAnimationFrame(animateWebGL);
+                const elapsedTime = clock.getElapsedTime();
+
+                // Slow cinematic rotation
+                particlesMesh.rotation.y = elapsedTime * 0.05;
+                particlesMesh.rotation.x = elapsedTime * 0.02;
+
+                // Mouse parallax effect
+                camera.position.x += (mouseX_GL * 0.8 - camera.position.x) * 0.05;
+                camera.position.y += (-mouseY_GL * 0.8 - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
+
+                renderer.render(scene, camera);
+            }
+            animateWebGL();
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+    </script>
+</body>
+</html>
